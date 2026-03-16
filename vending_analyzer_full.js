@@ -186,10 +186,10 @@
     }
     
     function openAndAnalyze(clientName, filterDate) {
-        const url = `https://manage.yallvend.com/secret/univend_inv_stock_check_v3?client_name=${encodeURIComponent(clientName)}`;
+        const url = 'https://manage.yallvend.com/secret/univend_inv_stock_check_v3?client_name=' + encodeURIComponent(clientName);
         
-        console.log(`準備開啟: ${url}`);
-        console.log(`篩選日期: ${filterDate}`);
+        console.log('準備開啟: ' + url);
+        console.log('篩選日期: ' + filterDate);
         
         const newWindow = window.open(url, '_blank');
         
@@ -212,14 +212,14 @@
         const pageText = targetWindow.document.body.innerText;
         const machines = pageText.split('=================================================================================');
         
-        console.log(`找到 ${machines.length} 個區塊`);
+        console.log('找到 ' + machines.length + ' 個區塊');
         
-        machines.forEach((machineBlock) => {
+        machines.forEach(function(machineBlock) {
             if (machineBlock.trim().length < 50) return;
             
             const finishSections = machineBlock.split(/== FINISH ID:/);
             
-            finishSections.forEach((section, sectionIndex) => {
+            finishSections.forEach(function(section, sectionIndex) {
                 if (section.trim().length < 50) return;
                 
                 let machineIdMatch;
@@ -247,7 +247,7 @@
                 const startTimeMatch = section.match(/開始時間\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
                 const endTimeFullMatch = section.match(/結束時間\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
                 const timeRange = startTimeMatch && endTimeFullMatch ? 
-                    `${startTimeMatch[1]} ~ ${endTimeFullMatch[1]}` : endDate;
+                    startTimeMatch[1] + ' ~ ' + endTimeFullMatch[1] : endDate;
                 
                 const invoiceTotalMatch = section.match(/發票總交易數量:\s*(\d+)/);
                 const stockTotalMatch = section.match(/庫存總交易數量:\s*(\d+)/);
@@ -266,7 +266,7 @@
                 
                 if (remainingTableMatch) {
                     const tableText = remainingTableMatch[1];
-                    const lines = tableText.split('\n').filter(line => line.trim());
+                    const lines = tableText.split('\n').filter(function(line) { return line.trim(); });
                     
                     let remainingLine = null;
                     
@@ -279,10 +279,10 @@
                     
                     if (remainingLine) {
                         const values = remainingLine.split('|')
-                            .map(v => v.trim())
-                            .filter(v => v && v !== '剩餘');
+                            .map(function(v) { return v.trim(); })
+                            .filter(function(v) { return v && v !== '剩餘'; });
                         
-                        values.forEach((val, idx) => {
+                        values.forEach(function(val, idx) {
                             const num = parseInt(val);
                             if (!isNaN(num) && num >= 1) {
                                 condition2 = true;
@@ -313,364 +313,92 @@
             });
         });
         
-        console.log(`分析完成，找到 ${errorMachines.length} 台有問題的機器`);
+        console.log('分析完成，找到 ' + errorMachines.length + ' 台有問題的機器');
         
         generateReport(errorMachines, clientName, filterDate);
     }
     
     function generateReport(errorMachines, clientName, filterDate) {
-        const reportHTML = `
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>機台異常分析報表 - ${clientName}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        let html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">';
+        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+        html += '<title>機台異常分析報表 - ' + clientName + '</title>';
+        html += '<style>*{margin:0;padding:0;box-sizing:border-box}';
+        html += 'body{font-family:"Segoe UI","Microsoft JhengHei",sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px;min-height:100vh}';
+        html += '.container{max-width:1200px;margin:0 auto;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);overflow:hidden}';
+        html += '.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;text-align:center}';
+        html += '.header h1{font-size:28px;margin-bottom:10px}.header .summary{font-size:16px;opacity:0.9}';
+        html += '.header .filters{margin-top:15px;padding-top:15px;border-top:1px solid rgba(255,255,255,0.3);font-size:14px}';
+        html += '.content{padding:30px}.machine-card{border:2px solid #e0e0e0;border-radius:8px;padding:20px;margin-bottom:20px;transition:all 0.3s}';
+        html += '.machine-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);transform:translateY(-2px)}';
+        html += '.machine-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-bottom:15px;border-bottom:2px solid #f0f0f0}';
+        html += '.machine-title{font-size:20px;font-weight:bold;color:#333}.machine-id{font-size:14px;color:#666;margin-top:5px}';
+        html += '.machine-date{font-size:12px;color:#888;margin-top:3px}.error-badge{background:#ff4444;color:white;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:bold}';
+        html += '.info-row{display:flex;gap:30px;margin-bottom:15px}.info-item{flex:1}.info-label{font-size:12px;color:#888;margin-bottom:5px}';
+        html += '.info-value{font-size:18px;font-weight:bold;color:#333}.condition-box{background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin-bottom:10px;border-radius:4px}';
+        html += '.condition-box.error{background:#f8d7da;border-left-color:#dc3545}.condition-title{font-weight:bold;margin-bottom:5px;color:#856404}';
+        html += '.condition-box.error .condition-title{color:#721c24}.condition-detail{font-size:14px;color:#666}';
+        html += '.remaining-table{margin-top:10px;width:100%;border-collapse:collapse}.remaining-table th,.remaining-table td{border:1px solid #ddd;padding:8px;text-align:center}';
+        html += '.remaining-table th{background:#f8f9fa;font-weight:bold}.highlight{background:#ffebee;font-weight:bold;color:#c62828}';
+        html += '.high-alert{background:#b71c1c;font-weight:bold;color:white;animation:pulse 1.5s ease-in-out infinite}';
+        html += '@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}.no-error{text-align:center;padding:40px;color:#28a745;font-size:20px}';
+        html += '.footer{text-align:center;padding:20px;color:#888;font-size:14px;border-top:1px solid #e0e0e0}';
+        html += '.generate-btn{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;margin-top:15px;transition:all 0.3s}';
+        html += '.generate-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(102,126,234,0.4)}';
+        html += '.transaction-output{margin-top:15px;padding:15px;background:#f8f9fa;border-radius:6px;font-family:"Courier New",monospace;font-size:12px;max-height:300px;overflow-y:auto}';
+        html += '</style></head><body><div class="container"><div class="header"><h1>🔍 機台異常分析報表</h1>';
+        html += '<div class="summary">分析時間: ' + new Date().toLocaleString('zh-TW') + ' | 異常機台數量: <strong>' + errorMachines.length + '</strong> 台</div>';
+        html += '<div class="filters">📍 地點: <strong>' + clientName + '</strong> | 📅 結束日期: <strong>' + filterDate + '</strong></div></div>';
+        html += '<div class="content">';
+        
+        if (errorMachines.length === 0) {
+            html += '<div class="no-error">✅ 太好了！在 ' + filterDate + ' 結束的機台都正常，沒有發現異常情況。</div>';
+        } else {
+            errorMachines.forEach(function(machine) {
+                html += '<div class="machine-card"><div class="machine-header"><div>';
+                html += '<div class="machine-title">' + machine.name + '</div>';
+                html += '<div class="machine-id">機台編號: ' + machine.id + ' (' + machine.code + ')</div>';
+                html += '<div class="machine-date">時間區段: ' + machine.timeRange + '</div>';
+                html += '</div><div class="error-badge">異常</div></div>';
+                html += '<div class="info-row"><div class="info-item"><div class="info-label">發票總交易數量</div>';
+                html += '<div class="info-value">' + machine.invoiceTotal + '</div></div>';
+                html += '<div class="info-item"><div class="info-label">庫存總交易數量</div>';
+                html += '<div class="info-value">' + machine.stockTotal + '</div></div></div>';
+                
+                if (machine.condition1) {
+                    html += '<div class="condition-box error"><div class="condition-title">❌ 條件1: 發票總交易數量小於庫存總交易數量</div>';
+                    html += '<div class="condition-detail">發票 (' + machine.invoiceTotal + ') < 庫存 (' + machine.stockTotal + ') → 差異: ' + (machine.stockTotal - machine.invoiceTotal) + ' 筆</div>';
+                    html += '<button class="generate-btn" onclick="generateTransactions(\'' + machine.id + '\',' + (machine.stockTotal - machine.invoiceTotal) + ',\'' + machine.timeRange + '\')">產生補單資料</button>';
+                    html += '<div id="output-' + machine.id + '" class="transaction-output" style="display:none;"></div></div>';
+                }
+                
+                if (machine.condition2) {
+                    html += '<div class="condition-box error"><div class="condition-title">❌ 條件2: 倉道剩餘可分配數量有大於等於1</div>';
+                    html += '<div class="condition-detail">發現 ' + machine.remainingIssues.length + ' 個倉道剩餘數量異常:';
+                    html += '<table class="remaining-table"><tr><th>倉道編號</th><th>剩餘數量</th></tr>';
+                    machine.remainingIssues.forEach(function(issue) {
+                        html += '<tr><td>CH ' + issue.channel + '</td>';
+                        html += '<td class="' + (issue.isHighAlert ? 'high-alert' : 'highlight') + '">' + issue.remaining + (issue.isHighAlert ? ' ⚠️' : '') + '</td></tr>';
+                    });
+                    html += '</table></div></div>';
+                }
+                
+                html += '</div>';
+            });
         }
         
-        body {
-            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header .summary {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-        
-        .header .filters {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.3);
-            font-size: 14px;
-        }
-        
-        .content {
-            padding: 30px;
-        }
-        
-        .machine-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s;
-        }
-        
-        .machine-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        
-        .machine-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .machine-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .machine-id {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .machine-date {
-            font-size: 12px;
-            color: #888;
-            margin-top: 3px;
-        }
-        
-        .error-badge {
-            background: #ff4444;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .info-row {
-            display: flex;
-            gap: 30px;
-            margin-bottom: 15px;
-        }
-        
-        .info-item {
-            flex: 1;
-        }
-        
-        .info-label {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 5px;
-        }
-        
-        .info-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .condition-box {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
-        
-        .condition-box.error {
-            background: #f8d7da;
-            border-left-color: #dc3545;
-        }
-        
-        .condition-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #856404;
-        }
-        
-        .condition-box.error .condition-title {
-            color: #721c24;
-        }
-        
-        .condition-detail {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .remaining-table {
-            margin-top: 10px;
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .remaining-table th,
-        .remaining-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        
-        .remaining-table th {
-            background: #f8f9fa;
-            font-weight: bold;
-        }
-        
-        .highlight {
-            background: #ffebee;
-            font-weight: bold;
-            color: #c62828;
-        }
-        
-        .high-alert {
-            background: #b71c1c;
-            font-weight: bold;
-            color: white;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        .no-error {
-            text-align: center;
-            padding: 40px;
-            color: #28a745;
-            font-size: 20px;
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #888;
-            font-size: 14px;
-            border-top: 1px solid #e0e0e0;
-        }
-        
-        .generate-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: all 0.3s;
-        }
-        
-        .generate-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .transaction-output {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🔍 機台異常分析報表</h1>
-            <div class="summary">
-                分析時間: ${new Date().toLocaleString('zh-TW')} | 異常機台數量: <strong>${errorMachines.length}</strong> 台
-            </div>
-            <div class="filters">
-                📍 地點: <strong>${clientName}</strong> | 📅 結束日期: <strong>${filterDate}</strong>
-            </div>
-        </div>
-        
-        <div class="content">
-            ${errorMachines.length === 0 ? 
-                \`<div class="no-error">✅ 太好了！在 ${filterDate} 結束的機台都正常，沒有發現異常情況。</div>\` :
-                errorMachines.map(machine => \`
-                    <div class="machine-card">
-                        <div class="machine-header">
-                            <div>
-                                <div class="machine-title">\${machine.name}</div>
-                                <div class="machine-id">機台編號: \${machine.id} (\${machine.code})</div>
-                                <div class="machine-date">時間區段: \${machine.timeRange}</div>
-                            </div>
-                            <div class="error-badge">異常</div>
-                        </div>
-                        
-                        <div class="info-row">
-                            <div class="info-item">
-                                <div class="info-label">發票總交易數量</div>
-                                <div class="info-value">\${machine.invoiceTotal}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">庫存總交易數量</div>
-                                <div class="info-value">\${machine.stockTotal}</div>
-                            </div>
-                        </div>
-                        
-                        \${machine.condition1 ? \`
-                            <div class="condition-box error">
-                                <div class="condition-title">❌ 條件1: 發票總交易數量小於庫存總交易數量</div>
-                                <div class="condition-detail">
-                                    發票 (\${machine.invoiceTotal}) < 庫存 (\${machine.stockTotal})
-                                    → 差異: \${machine.stockTotal - machine.invoiceTotal} 筆
-                                </div>
-                                <button class="generate-btn" onclick="generateTransactions('\${machine.id}', \${machine.stockTotal - machine.invoiceTotal}, '\${machine.timeRange}')">
-                                    產生補單資料
-                                </button>
-                                <div id="output-\${machine.id}" class="transaction-output" style="display:none;"></div>
-                            </div>
-                        \` : ''}
-                        
-                        \${machine.condition2 ? \`
-                            <div class="condition-box error">
-                                <div class="condition-title">❌ 條件2: 倉道剩餘可分配數量有大於等於1</div>
-                                <div class="condition-detail">
-                                    發現 \${machine.remainingIssues.length} 個倉道剩餘數量異常:
-                                    <table class="remaining-table">
-                                        <tr>
-                                            <th>倉道編號</th>
-                                            <th>剩餘數量</th>
-                                        </tr>
-                                        \${machine.remainingIssues.map(issue => \`
-                                            <tr>
-                                                <td>CH \${issue.channel}</td>
-                                                <td class="\${issue.isHighAlert ? 'high-alert' : 'highlight'}">\${issue.remaining}\${issue.isHighAlert ? ' ⚠️' : ''}</td>
-                                            </tr>
-                                        \`).join('')}
-                                    </table>
-                                </div>
-                            </div>
-                        \` : ''}
-                    </div>
-                \`).join('')
-            }
-        </div>
-        
-        <div class="footer">
-            ${clientName} 機台分析系統 | 自動化資料分析工具
-        </div>
-    </div>
-    
-    <script>
-        function generateTransactions(machineId, count, timeRange) {
-            const timeMatch = timeRange.match(/(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})\\s*~\\s*(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})/);
-            
-            if (!timeMatch) {
-                alert('無法解析時間區段');
-                return;
-            }
-            
-            const startTime = new Date(timeMatch[1]);
-            const endTime = new Date(timeMatch[2]);
-            
-            const transactions = [];
-            for (let i = 0; i < count; i++) {
-                const randomTime = new Date(startTime.getTime() + Math.random() * (endTime.getTime() - startTime.getTime()));
-                const formattedTime = randomTime.toISOString().replace('T', ' ').substring(0, 19);
-                transactions.push(formattedTime);
-            }
-            
-            transactions.sort();
-            
-            const output = document.getElementById('output-' + machineId);
-            output.style.display = 'block';
-            output.innerHTML = '<strong>產生的補單交易時間：</strong><br><br>' + 
-                               transactions.map((t, i) => \`\${i + 1}. \${t}\`).join('<br>');
-        }
-    </script>
-</body>
-</html>
-        `;
+        html += '</div><div class="footer">' + clientName + ' 機台分析系統 | 自動化資料分析工具</div></div>';
+        html += '<script>function generateTransactions(machineId,count,timeRange){';
+        html += 'var m=timeRange.match(/(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})\\s*~\\s*(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})/);';
+        html += 'if(!m){alert("無法解析時間區段");return}';
+        html += 'var s=new Date(m[1]),e=new Date(m[2]),t=[];';
+        html += 'for(var i=0;i<count;i++){var r=new Date(s.getTime()+Math.random()*(e.getTime()-s.getTime()));';
+        html += 't.push(r.toISOString().replace("T"," ").substring(0,19))}';
+        html += 't.sort();var o=document.getElementById("output-"+machineId);';
+        html += 'o.style.display="block";o.innerHTML="<strong>產生的補單交易時間：</strong><br><br>"+t.map(function(x,i){return(i+1)+". "+x}).join("<br>")';
+        html += '}</script></body></html>';
         
         const reportWindow = window.open('', '_blank');
-        reportWindow.document.write(reportHTML);
+        reportWindow.document.write(html);
         reportWindow.document.close();
     }
     
