@@ -181,29 +181,180 @@
             }
             
             document.body.removeChild(overlay);
-            openAndAnalyze(finalClient, selectedDate);
+            
+            // 顯示說明對話框
+            showInstructions(finalClient, selectedDate);
+        });
+    }
+    
+    function showInstructions(clientName, filterDate) {
+        const url = 'https://manage.yallvend.com/secret/univend_inv_stock_check_v3?client_name=' + encodeURIComponent(clientName);
+        
+        const instructOverlay = document.createElement('div');
+        instructOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        `;
+        
+        const instructDialog = document.createElement('div');
+        instructDialog.style.cssText = `
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+        `;
+        
+        instructDialog.innerHTML = `
+            <style>
+                .instruct-dialog * {
+                    box-sizing: border-box;
+                    font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+                }
+                .instruct-dialog h2 {
+                    margin: 0 0 20px 0;
+                    color: #333;
+                    font-size: 24px;
+                    text-align: center;
+                }
+                .instruct-dialog .step {
+                    background: #f0f0f0;
+                    padding: 15px;
+                    margin: 10px 0;
+                    border-radius: 8px;
+                    border-left: 4px solid #667eea;
+                }
+                .instruct-dialog .step strong {
+                    color: #667eea;
+                    font-size: 18px;
+                }
+                .instruct-dialog .url-box {
+                    background: #fff;
+                    border: 2px solid #ddd;
+                    padding: 10px;
+                    margin: 15px 0;
+                    border-radius: 6px;
+                    font-family: monospace;
+                    word-break: break-all;
+                    font-size: 12px;
+                }
+                .instruct-dialog .button-group {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 25px;
+                }
+                .instruct-dialog button {
+                    flex: 1;
+                    padding: 12px;
+                    border: none;
+                    border-radius: 6px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+                .instruct-dialog .btn-primary {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                .instruct-dialog .btn-primary:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                }
+                .instruct-dialog .btn-secondary {
+                    background: #e0e0e0;
+                    color: #666;
+                }
+            </style>
+            <div class="instruct-dialog">
+                <h2>📋 操作說明</h2>
+                
+                <div class="step">
+                    <strong>步驟 1:</strong> 點擊下方「開啟分析頁面」按鈕
+                </div>
+                
+                <div class="step">
+                    <strong>步驟 2:</strong> 等待頁面完全載入（資料量大時可能需要數分鐘）
+                </div>
+                
+                <div class="step">
+                    <strong>步驟 3:</strong> 資料載入完成後，點擊「開始分析」按鈕
+                </div>
+                
+                <div style="margin: 20px 0; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <strong>⏳ 注意事項：</strong><br>
+                    • 地點：<strong>${clientName}</strong><br>
+                    • 篩選日期：<strong>${filterDate}</strong><br>
+                    • 資料量大時請耐心等待載入完成
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-secondary" id="cancelBtn2">取消</button>
+                    <button class="btn-primary" id="openBtn">開啟分析頁面</button>
+                    <button class="btn-primary" id="analyzeBtn" style="display:none;">開始分析</button>
+                </div>
+            </div>
+        `;
+        
+        instructOverlay.appendChild(instructDialog);
+        document.body.appendChild(instructOverlay);
+        
+        let targetWindow = null;
+        
+        instructDialog.querySelector('#cancelBtn2').addEventListener('click', function() {
+            if (targetWindow && !targetWindow.closed) {
+                targetWindow.close();
+            }
+            document.body.removeChild(instructOverlay);
+        });
+        
+        instructDialog.querySelector('#openBtn').addEventListener('click', function() {
+            targetWindow = window.open(url, '_blank');
+            
+            if (!targetWindow) {
+                alert('無法開啟新視窗，請檢查瀏覽器彈出視窗設定');
+                return;
+            }
+            
+            instructDialog.querySelector('#openBtn').style.display = 'none';
+            instructDialog.querySelector('#analyzeBtn').style.display = 'block';
+        });
+        
+        instructDialog.querySelector('#analyzeBtn').addEventListener('click', function() {
+            if (!targetWindow || targetWindow.closed) {
+                alert('分析頁面已關閉，請重新開啟');
+                return;
+            }
+            
+            try {
+                const pageText = targetWindow.document.body.innerText;
+                
+                if (!pageText.includes('發票總交易數量') || !pageText.includes('庫存總交易數量')) {
+                    alert('資料尚未載入完成，請稍候再試');
+                    return;
+                }
+                
+                document.body.removeChild(instructOverlay);
+                analyzeData(targetWindow, clientName, filterDate);
+            } catch (e) {
+                alert('無法存取分析頁面，請確認頁面已完全載入');
+                console.error(e);
+            }
         });
     }
     
     function openAndAnalyze(clientName, filterDate) {
-        const url = 'https://manage.yallvend.com/secret/univend_inv_stock_check_v3?client_name=' + encodeURIComponent(clientName);
-        
-        console.log('準備開啟: ' + url);
-        console.log('篩選日期: ' + filterDate);
-        
-        const newWindow = window.open(url, '_blank');
-        
-        if (!newWindow) {
-            alert('無法開啟新視窗，請檢查瀏覽器彈出視窗設定');
-            return;
-        }
-        
-        newWindow.addEventListener('load', function() {
-            setTimeout(function() {
-                analyzeData(newWindow, clientName, filterDate);
-            }, 1000);
-        });
-    }
+        // 保留此函數以維持相容性，但不再使用
+        showInstructions(clientName, filterDate);
     
     function analyzeData(targetWindow, clientName, filterDate) {
         console.log('開始分析機台資料...');
