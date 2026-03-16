@@ -1,7 +1,6 @@
 (function() {
     'use strict';
     
-    // 捕捉並忽略擴充功能錯誤
     window.addEventListener('error', function(e) {
         if (e.message && e.message.includes('runtime.lastError')) {
             e.stopImmediatePropagation();
@@ -9,7 +8,6 @@
         }
     }, true);
     
-    // 建立選單對話框
     function createSelectionDialog() {
         const clientList = [
             '基隆所', '台北所', '新店所', '桃園所', '中壢所', '新竹所',
@@ -573,14 +571,14 @@
         
         <div class="content">
             ${errorMachines.length === 0 ? 
-                `<div class="no-error">✅ 太好了！在 ${filterDate} 結束的機台都正常，沒有發現異常情況。</div>` :
-                errorMachines.map(machine => `
+                \`<div class="no-error">✅ 太好了！在 ${filterDate} 結束的機台都正常，沒有發現異常情況。</div>\` :
+                errorMachines.map(machine => \`
                     <div class="machine-card">
                         <div class="machine-header">
                             <div>
-                                <div class="machine-title">${machine.name}</div>
-                                <div class="machine-id">機台編號: ${machine.id} (${machine.code})</div>
-                                <div class="machine-date">時間區段: ${machine.timeRange}</div>
+                                <div class="machine-title">\${machine.name}</div>
+                                <div class="machine-id">機台編號: \${machine.id} (\${machine.code})</div>
+                                <div class="machine-date">時間區段: \${machine.timeRange}</div>
                             </div>
                             <div class="error-badge">異常</div>
                         </div>
@@ -588,50 +586,50 @@
                         <div class="info-row">
                             <div class="info-item">
                                 <div class="info-label">發票總交易數量</div>
-                                <div class="info-value">${machine.invoiceTotal}</div>
+                                <div class="info-value">\${machine.invoiceTotal}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">庫存總交易數量</div>
-                                <div class="info-value">${machine.stockTotal}</div>
+                                <div class="info-value">\${machine.stockTotal}</div>
                             </div>
                         </div>
                         
-                        ${machine.condition1 ? `
+                        \${machine.condition1 ? \`
                             <div class="condition-box error">
                                 <div class="condition-title">❌ 條件1: 發票總交易數量小於庫存總交易數量</div>
                                 <div class="condition-detail">
-                                    發票 (${machine.invoiceTotal}) < 庫存 (${machine.stockTotal})
-                                    → 差異: ${machine.stockTotal - machine.invoiceTotal} 筆
+                                    發票 (\${machine.invoiceTotal}) < 庫存 (\${machine.stockTotal})
+                                    → 差異: \${machine.stockTotal - machine.invoiceTotal} 筆
                                 </div>
-                                <button class="generate-btn" onclick="generateTransactions('${machine.id}', ${machine.stockTotal - machine.invoiceTotal}, '${machine.timeRange}')">
+                                <button class="generate-btn" onclick="generateTransactions('\${machine.id}', \${machine.stockTotal - machine.invoiceTotal}, '\${machine.timeRange}')">
                                     產生補單資料
                                 </button>
-                                <div id="output-${machine.id}" class="transaction-output" style="display:none;"></div>
+                                <div id="output-\${machine.id}" class="transaction-output" style="display:none;"></div>
                             </div>
-                        ` : ''}
+                        \` : ''}
                         
-                        ${machine.condition2 ? `
+                        \${machine.condition2 ? \`
                             <div class="condition-box error">
                                 <div class="condition-title">❌ 條件2: 倉道剩餘可分配數量有大於等於1</div>
                                 <div class="condition-detail">
-                                    發現 ${machine.remainingIssues.length} 個倉道剩餘數量異常:
+                                    發現 \${machine.remainingIssues.length} 個倉道剩餘數量異常:
                                     <table class="remaining-table">
                                         <tr>
                                             <th>倉道編號</th>
                                             <th>剩餘數量</th>
                                         </tr>
-                                        ${machine.remainingIssues.map(issue => `
+                                        \${machine.remainingIssues.map(issue => \`
                                             <tr>
-                                                <td>CH ${issue.channel}</td>
-                                                <td class="${issue.isHighAlert ? 'high-alert' : 'highlight'}">${issue.remaining}${issue.isHighAlert ? ' ⚠️' : ''}</td>
+                                                <td>CH \${issue.channel}</td>
+                                                <td class="\${issue.isHighAlert ? 'high-alert' : 'highlight'}">\${issue.remaining}\${issue.isHighAlert ? ' ⚠️' : ''}</td>
                                             </tr>
-                                        `).join('')}
+                                        \`).join('')}
                                     </table>
                                 </div>
                             </div>
-                        ` : ''}
+                        \` : ''}
                     </div>
-                `).join('')
+                \`).join('')
             }
         </div>
         
@@ -642,7 +640,7 @@
     
     <script>
         function generateTransactions(machineId, count, timeRange) {
-            const timeMatch = timeRange.match(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s*~\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
+            const timeMatch = timeRange.match(/(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})\\s*~\\s*(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})/);
             
             if (!timeMatch) {
                 alert('無法解析時間區段');
@@ -664,7 +662,7 @@
             const output = document.getElementById('output-' + machineId);
             output.style.display = 'block';
             output.innerHTML = '<strong>產生的補單交易時間：</strong><br><br>' + 
-                               transactions.map((t, i) => `${i + 1}. ${t}`).join('<br>');
+                               transactions.map((t, i) => \`\${i + 1}. \${t}\`).join('<br>');
         }
     </script>
 </body>
