@@ -1,6 +1,14 @@
 (function() {
     'use strict';
     
+    // 捕捉並忽略擴充功能錯誤
+    window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('runtime.lastError')) {
+            e.stopImmediatePropagation();
+            return true;
+        }
+    }, true);
+    
     // 建立選單對話框
     function createSelectionDialog() {
         const clientList = [
