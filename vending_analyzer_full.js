@@ -355,6 +355,7 @@
     function openAndAnalyze(clientName, filterDate) {
         // 保留此函數以維持相容性，但不再使用
         showInstructions(clientName, filterDate);
+    }
     
     function analyzeData(targetWindow, clientName, filterDate) {
         console.log('開始分析機台資料...');
