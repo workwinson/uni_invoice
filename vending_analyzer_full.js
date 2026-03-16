@@ -403,4 +403,7 @@
     }
     
     createSelectionDialog();
+    
+    // 提供重複呼叫功能
+    window.vendingAnalyzerStart = createSelectionDialog;
 })();
